@@ -3,8 +3,10 @@ const TicketControl = require("../models/ticket-control");
 const ticketControl = new TicketControl();
 
 const socketController = (socket) => {
+  //Cuando un cliente se conecta
   socket.emit("ultimo-ticket", ticketControl.ultimo);
   socket.emit("estado-actual", ticketControl.ultimos4);
+  socket.emit("tickets-pendientes", ticketControl.tickets.length);
 
   socket.on("disconnect", () => {
     console.log("Cliente desconectado", socket.id);
@@ -13,6 +15,7 @@ const socketController = (socket) => {
   socket.on("siguiente-ticket", (payload, callback) => {
     const siguiente = ticketControl.siguiente();
     callback(siguiente);
+    socket.broadcast.emit("tickets-pendientes", ticketControl.tickets.length);
 
     //TODO: Notificar que hay un nuevo ticket pendiente de asignar
   });
@@ -29,6 +32,9 @@ const socketController = (socket) => {
 
     // TODO: Notificar cambio en los ultimos 4
     socket.broadcast.emit("estado-actual", ticketControl.ultimos4);
+    socket.emit("tickets-pendientes", ticketControl.tickets.length);
+    socket.broadcast.emit("tickets-pendientes", ticketControl.tickets.length);
+    
 
     if (!ticket) {
       callback({
